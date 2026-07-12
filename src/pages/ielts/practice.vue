@@ -23,9 +23,15 @@ function onKeydown(e, word) {
   }
 }
 
+let audio: HTMLAudioElement | null = null
 function play(word: string) {
-  const audio = document.createElement('audio')
-  audio.src = `/179_audios/${word}.mp3`
+  if (audio) {
+    audio.pause()
+    audio.currentTime = 0
+  }
+
+  audio = document.createElement('audio')
+  audio.src = new URL(`./179_audios/${encodeURIComponent(word)}.mp3`, document.baseURI).href
   audio.play()
 }
 function next(index: number) {
