@@ -12,7 +12,9 @@
   My <span>IELTS™</span>
 </h1>
 
-<h2>在线地址 <a href="https://ralphfh.github.io/my-ielts/#/">https://hefengxian.github.io/my-ielts/</a></h2>
+<h2>在线地址 <a href="https://ralphfh.github.io/My-IELTS/#/">https://ralphfh.github.io/My-IELTS/</a></h2>
+
+本仓库 Fork 自 [hefengxian/my-ielts](https://github.com/hefengxian/my-ielts)，在原项目基础上维护个人部署和 Bug 修复。
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="public/screenshot/screenshot-home-dark.png">
@@ -26,6 +28,8 @@
 雅思备考资料，包含词汇、语法、听说读写最出名的一些内容
 
 - [x] 词汇练习模式
+- [x] 听力 179 考点词练习与本地音频播放
+- [x] 阅读考点词练习
 
 ## 规划栏目
 
@@ -96,6 +100,7 @@ TODO
 ### 阅读
 
 - 538 考点词同义替换
+- 考点词与同义替换练习模式
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="public/screenshot/screenshot-reading-dark.png">
