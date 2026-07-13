@@ -5,16 +5,59 @@ const ws = reactive(words)
 
 const keyword = ref('')
 
-let audio = null
-function play(word) {
-  if (audio) {
-    audio.pause()
-    audio.currentTime = 0
+let fallbackAudio = null
+let activeUtterances = []
+
+function fallbackPlay(word) {
+  if (fallbackAudio) {
+    fallbackAudio.pause()
+    fallbackAudio.currentTime = 0
   }
-  audio = document.createElement('audio')
-  audio.src = `https://dict.youdao.com/dictvoice?audio=${word}&type=1`
-  audio.play()
+
+  fallbackAudio = document.createElement('audio')
+  fallbackAudio.src = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=1`
+  fallbackAudio.play()
 }
+
+function speak(text, lang, rate) {
+  if (!text)
+    return
+
+  const utterance = new SpeechSynthesisUtterance(text)
+  utterance.lang = lang
+  utterance.rate = rate
+  utterance.onend = utterance.onerror = () => {
+    activeUtterances = activeUtterances.filter(item => item !== utterance)
+  }
+  activeUtterances.push(utterance)
+  window.speechSynthesis.speak(utterance)
+}
+
+function play(entry) {
+  const word = entry[1].replace(/\*$/, '')
+
+  if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+    fallbackPlay(word)
+    return
+  }
+
+  window.speechSynthesis.cancel()
+  activeUtterances = []
+
+  speak(`${word}.`, 'en-US', 0.85)
+  speak(`${entry[3].join('；')}。`, 'zh-CN', 0.9)
+  speak(entry[4].join(', '), 'en-US', 0.85)
+}
+
+onBeforeUnmount(() => {
+  if ('speechSynthesis' in window)
+    window.speechSynthesis.cancel()
+
+  if (fallbackAudio) {
+    fallbackAudio.pause()
+    fallbackAudio = null
+  }
+})
 </script>
 
 <template>
@@ -89,7 +132,7 @@ function play(word) {
                   {{ w[0] }}
                 </td>
                 <td class="px-6 py-4">
-                  <a href="javascript:;" class="i-carbon-volume-up-filled block" @click="play(w[1])" />
+                  <a href="javascript:;" class="i-carbon-volume-up-filled block" @click="play(w)" />
                 </td>
                 <th scope="row" class="whitespace-nowrap px-6 py-4 font-medium text-gray-900 dark:text-white">
                   <a
