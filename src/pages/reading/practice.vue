@@ -28,22 +28,62 @@ const ws = reactive(words.map(word => ({
   },
 })))
 
-let audio = null
-function play(word) {
-  if (audio) {
-    audio.pause()
-    audio.currentTime = 0
+let fallbackAudio = null
+let activeUtterances = []
+
+function fallbackPlay(word) {
+  if (fallbackAudio) {
+    fallbackAudio.pause()
+    fallbackAudio.currentTime = 0
   }
 
-  audio = document.createElement('audio')
-  audio.src = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=1`
-  audio.play()
+  fallbackAudio = document.createElement('audio')
+  fallbackAudio.src = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=1`
+  fallbackAudio.play()
 }
 
-function onKeydown(event, word) {
+function speak(text, lang, rate) {
+  if (!text)
+    return
+
+  const utterance = new SpeechSynthesisUtterance(text)
+  utterance.lang = lang
+  utterance.rate = rate
+  utterance.onend = utterance.onerror = () => {
+    activeUtterances = activeUtterances.filter(item => item !== utterance)
+  }
+  activeUtterances.push(utterance)
+  window.speechSynthesis.speak(utterance)
+}
+
+function play(item) {
+  if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+    fallbackPlay(item.word)
+    return
+  }
+
+  window.speechSynthesis.cancel()
+  activeUtterances = []
+
+  speak(`${item.word}.`, 'en-US', 0.85)
+  speak(`${item.meanings.join('；')}。`, 'zh-CN', 0.9)
+  speak(item.replacements.join(', '), 'en-US', 0.85)
+}
+
+onBeforeUnmount(() => {
+  if ('speechSynthesis' in window)
+    window.speechSynthesis.cancel()
+
+  if (fallbackAudio) {
+    fallbackAudio.pause()
+    fallbackAudio = null
+  }
+})
+
+function onKeydown(event, item) {
   if (event.key === '`') {
     event.preventDefault()
-    play(word)
+    play(item)
   }
 }
 
@@ -75,7 +115,7 @@ function next(index) {
     return
 
   const nextWord = ws[nextIndex]
-  play(nextWord.word)
+  play(nextWord)
   document.getElementById(`reading_input_${nextWord.index}`)?.focus()
 }
 
@@ -83,7 +123,7 @@ function start() {
   if (ws.length < 1)
     return
 
-  play(ws[0].word)
+  play(ws[0])
   document.getElementById(`reading_input_${ws[0].index}`)?.focus()
 }
 </script>
@@ -97,7 +137,7 @@ function start() {
         </h3>
         <ul class="ml-4 list-decimal text-sm font-normal text-gray-500 dark:text-gray-400">
           <li>同义替换多个词使用英文逗号 <kbd class="rounded-lg bg-gray-100 px-2 text-xs font-semibold text-gray-800 dark:border-gray-500 dark:bg-gray-600 dark:text-gray-100">,</kbd> 分割</li>
-          <li>点击喇叭图标或按 <kbd class="rounded-lg bg-gray-100 px-2 text-xs font-semibold text-gray-800 dark:border-gray-500 dark:bg-gray-600 dark:text-gray-100">`</kbd> 播放当前单词</li>
+          <li>点击喇叭图标或按 <kbd class="rounded-lg bg-gray-100 px-2 text-xs font-semibold text-gray-800 dark:border-gray-500 dark:bg-gray-600 dark:text-gray-100">`</kbd>，依次朗读考点词、中文释义和英文同义词</li>
           <li>输入完同义词后按 Enter 检查并进入下一个词</li>
         </ul>
       </div>
@@ -150,11 +190,11 @@ function start() {
               {{ w.types.join(', ') }}
             </td>
             <td class="px-6 py-4">
-              <button class="i-carbon-volume-up-filled" @click="play(w.word)" />
+              <button class="i-carbon-volume-up-filled" @click="play(w)" />
             </td>
             <td
               class="flex flex-row items-center justify-start px-6 py-4"
-              @keydown="onKeydown($event, w.word)"
+              @keydown="onKeydown($event, w)"
             >
               <input
                 :id="`reading_input_${w.index}`"
