@@ -1,63 +1,20 @@
 <script setup>
+import { useReadingSpeech } from '../../composables/audio'
 import words from './reading538words'
 
 const ws = reactive(words)
 
 const keyword = ref('')
 
-let fallbackAudio = null
-let activeUtterances = []
-
-function fallbackPlay(word) {
-  if (fallbackAudio) {
-    fallbackAudio.pause()
-    fallbackAudio.currentTime = 0
-  }
-
-  fallbackAudio = document.createElement('audio')
-  fallbackAudio.src = `https://dict.youdao.com/dictvoice?audio=${encodeURIComponent(word)}&type=1`
-  fallbackAudio.play()
-}
-
-function speak(text, lang, rate) {
-  if (!text)
-    return
-
-  const utterance = new SpeechSynthesisUtterance(text)
-  utterance.lang = lang
-  utterance.rate = rate
-  utterance.onend = utterance.onerror = () => {
-    activeUtterances = activeUtterances.filter(item => item !== utterance)
-  }
-  activeUtterances.push(utterance)
-  window.speechSynthesis.speak(utterance)
-}
+const readingSpeech = useReadingSpeech()
 
 function play(entry) {
-  const word = entry[1].replace(/\*$/, '')
-
-  if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
-    fallbackPlay(word)
-    return
-  }
-
-  window.speechSynthesis.cancel()
-  activeUtterances = []
-
-  speak(`${word}.`, 'en-US', 0.85)
-  speak(`${entry[3].join('；')}。`, 'zh-CN', 0.9)
-  speak(entry[4].join(', '), 'en-US', 0.85)
+  readingSpeech.play({
+    word: entry[1].replace(/\*$/, ''),
+    meanings: entry[3],
+    replacements: entry[4],
+  })
 }
-
-onBeforeUnmount(() => {
-  if ('speechSynthesis' in window)
-    window.speechSynthesis.cancel()
-
-  if (fallbackAudio) {
-    fallbackAudio.pause()
-    fallbackAudio = null
-  }
-})
 </script>
 
 <template>

@@ -1,4 +1,5 @@
 <script setup>
+import { useExclusiveAudio } from '../../composables/audio'
 import words from './listening179.json'
 
 const ws = reactive(words.map((v) => {
@@ -23,16 +24,10 @@ function onKeydown(e, word) {
   }
 }
 
-let audio = null
-function play(word) {
-  if (audio) {
-    audio.pause()
-    audio.currentTime = 0
-  }
+const audio = useExclusiveAudio()
 
-  audio = document.createElement('audio')
-  audio.src = new URL(`./179_audios/${encodeURIComponent(word)}.mp3`, document.baseURI).href
-  audio.play()
+function play(word) {
+  audio.play(new URL(`179_audios/${encodeURIComponent(word)}.mp3`, document.baseURI).href)
 }
 function next(index) {
   const i = index + 1

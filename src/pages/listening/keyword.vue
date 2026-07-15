@@ -1,11 +1,12 @@
 <script setup>
+import { useExclusiveAudio } from '../../composables/audio'
 import words from './listening179.json'
 
 const ws = reactive(words)
+const audio = useExclusiveAudio()
+
 function play(word) {
-  const audio = document.createElement('audio')
-  audio.src = `179_audios/${word}.mp3`
-  audio.play()
+  audio.play(new URL(`179_audios/${encodeURIComponent(word)}.mp3`, document.baseURI).href)
 }
 
 const keyword = ref('')
